@@ -1,30 +1,30 @@
 #pragma once
-g
-#include <iomanip>
 #include <iostream>
+#include <string>
 
 struct Trunk {
     Trunk* prev;
-    string str;
+    std::string str;
 
-    Trunk(Trunk* prev, string str) {
+    Trunk(Trunk* prev, std::string str) {
         this->prev = prev;
         this->str = str;
     }
 };
 
 // Helper function to print branches of the binary tree
-void showTrunks(ostream& os, Trunk* p) {
+void showTrunks(std::ostream& os, Trunk* p) {
     if (p == nullptr)
         return;
     showTrunks(os, p->prev);
     os << p->str;
 }
 
-template <typename T> void dump(ostream& os, T* root, Trunk* prev = nullptr, bool left = true) {
+template <typename T>
+void dump(std::ostream& os, T* root, Trunk* prev = nullptr, bool left = true) {
     if (root == nullptr)
         return;
-    string prev_str = "    ";
+    std::string prev_str = "    ";
     Trunk* trunk = new Trunk(prev, prev_str);
     dump(os, root->left, trunk, true);
     if (!prev)
@@ -37,14 +37,14 @@ template <typename T> void dump(ostream& os, T* root, Trunk* prev = nullptr, boo
         prev->str = prev_str;
     }
     showTrunks(os, trunk);
-    cout << root->val << endl;
+    std::cerr << root->val << std::endl;
     if (prev)
         prev->str = prev_str;
     trunk->str = "   |";
     dump(os, root->right, trunk, false);
 }
 
-template <typename T> inline static ostream& operator<<(ostream& os, T* root) noexcept {
+template <typename T> inline static std::ostream& operator<<(std::ostream& os, T* root) noexcept {
     dump(os, root);
     return os;
 }
