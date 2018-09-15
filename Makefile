@@ -13,7 +13,7 @@ LD = $(CXX)
 LDFLAGS := $(CXXFLAGS) $(LDFLAGS)
 
 install:
-	mkdir -p $(PREFIX)/include/ccutils && cp -r src/* $(PREFIX)/include/ccutils/
+	mkdir -p $(PREFIX)/include/ccutils && cp -r ccutils/* $(PREFIX)/include/ccutils/
 
 all.o: test/all.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Isrc -c $< -o $@

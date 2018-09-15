@@ -208,6 +208,9 @@ class Process;
 bool running(pid_t pid);
 bool running(const Process& pr);
 
+struct EndOfStream {};
+inline EndOfStream eof;
+
 /**
  * A handle that represents a child process.
  */
@@ -361,26 +364,12 @@ public:
      * Constructs a new child process, executing the given application and
      * passing the given arguments to it.
      */
-    template <class... Args>
-    Process(std::string application, Args&&... args)
-        : args_{ std::move(application), std::forward<Args>(args)... }
+    Process(std::string command)
+        : command{ std::move(command) }
         , in_stream_{ &pipe_buf_ }
         , out_stream_{ &pipe_buf_ }
         , err_stream_{ &err_buf_ } {
         // nothing
-    }
-
-    /*
-     * Adds an argument to the argument-list
-     */
-    void add_argument(std::string arg) { args_.push_back(std::move(arg)); }
-
-    /*
-     * Add further arguments to the argument-list
-     */
-    template <typename InputIterator>
-    void append_arguments(InputIterator first, InputIterator last) {
-        args_.emplace(args_.end(), first, last);
     }
 
     /**
@@ -418,14 +407,12 @@ public:
                 pipe_buf_.stdin_pipe().dup(Pipe::read_end(), STDIN_FILENO);
             }
 
-            std::vector<char*> args;
-            args.reserve(args_.size() + 1);
-            for (auto& arg : args_)
-                args.push_back(const_cast<char*>(arg.c_str()));
-            args.push_back(nullptr);
-
+            std::vector<char> argv0("sh", "sh" + strlen("sh") + 1);
+            std::vector<char> argv1("-c", "-c" + strlen("-c") + 1);
+            std::vector<char> argv2(command.data(), command.data() + command.size() + 1);
+            char * const argv[] = { argv0.data(), argv1.data(), argv2.data(), nullptr };
             limits_.set_limits();
-            execvp(args[0], args.data());
+            execvp("/bin/sh", argv);
 
             char err[sizeof(int)];
             std::memcpy(err, &errno, sizeof(int));
@@ -603,8 +590,13 @@ public:
     /**
      * Write operator.
      */
-    template <class T> friend std::ostream& operator<<(Process& proc, T&& input) {
-        return proc.in_stream_ << input;
+    template <class T> friend Process& operator<<(Process& proc, T&& input) {
+        proc.in_stream_ << input;
+        return proc;
+    }
+
+    friend void operator<<(Process& proc, ccutils::EndOfStream &) {
+        proc.close(ccutils::Pipe::write_end());
     }
 
     /**
@@ -645,7 +637,7 @@ private:
             read_from_->recursive_close_stdin();
     }
 
-    std::vector<std::string> args_;
+    std::string command;
     Process* read_from_ = nullptr;
     limits_t limits_;
     pid_t pid_ = -1;
