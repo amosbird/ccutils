@@ -720,6 +720,18 @@ namespace print_detail {
                     = itoa(num_buf, ch, precision, formatted_integer<Arg>(arg), width, flags);
                 output_string(ch, s_ptr, precision, width, flags, slen, ctx);
                 return Printf(ctx, format + 1, ts...);
+            } else if constexpr (std::is_floating_point_v<Arg>) {
+                std::string s = formatted_object(arg);
+                auto i = s.size();
+                for (; i--;) {
+                    if (s[i] != '0')
+                        break;
+                }
+                if (i == 0 || s[i] == '.')
+                    i++;
+                i++;
+                output_string('s', s.data(), precision, width, flags, i, ctx);
+                return Printf(ctx, format + 1, ts...);
             } else {
                 std::string s = formatted_object(arg);
                 output_string('s', s.data(), precision, width, flags, s.size(), ctx);
@@ -945,7 +957,7 @@ namespace print_detail {
                     do {
                         ++format;
                         ++count;
-                    } while (UNLIKELY(*format != '%'));
+                    } while (UNLIKELY(*format != '%' && *format != '\0'));
 
                     ctx.write(first, count);
                     continue;
@@ -954,8 +966,7 @@ namespace print_detail {
                 ++format;
             }
 
-            // clean up any trailing stuff
-            return Printf(ctx, format + 1, ts...);
+            print_detail::ThrowError("Bad Format, arguments > formaters");
         } else {
             for (; *format; ++format) {
                 if (LIKELY(*format != '%' || *++format == '%')) {
@@ -963,7 +974,7 @@ namespace print_detail {
                     continue;
                 }
 
-                print_detail::ThrowError("Bad Format");
+                print_detail::ThrowError("Bad Format, arguments < formaters");
             }
 
             // this will usually null terminate the string
