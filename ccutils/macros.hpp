@@ -1,35 +1,16 @@
 #pragma once
 
+#include <functional>
 #include <utility>
 
 #ifndef ALWAYS_INLINE
 #define ALWAYS_INLINE __attribute__((always_inline))
 #endif
 
-#ifndef SCOPE_EXIT
-namespace ccutils {
-
-template <class F> class scope_guard {
-    const F function;
-
-public:
-    constexpr scope_guard(const F& function)
-        : function{ function } {}
-    constexpr scope_guard(F&& function)
-        : function{ std::move(function) } {}
-    ~scope_guard() { function(); }
-};
-
-template <class F> inline scope_guard<F> make_scope_guard(F&& function) {
-    return std::forward<F>(function);
-}
-
-}
-
-#define SCOPE_EXIT_CONCAT(n, ...)                                                                  \
-    const auto scope_exit##n = ccutils::make_scope_guard([&] { __VA_ARGS__; })
-#define SCOPE_EXIT_FWD(n, ...) SCOPE_EXIT_CONCAT(n, __VA_ARGS__)
-#define SCOPE_EXIT(...) SCOPE_EXIT_FWD(__LINE__, __VA_ARGS__)
+#ifndef ANONYMOUS_VARIABLE
+#define CONCATENATE_IMPL(s1, s2) s1##s2
+#define CONCATENATE(s1, s2) CONCATENATE_IMPL(s1, s2)
+#define ANONYMOUS_VARIABLE(str) CONCATENATE(str, __COUNTER__)
 #endif
 
 #ifndef MAKE_HASHABLE

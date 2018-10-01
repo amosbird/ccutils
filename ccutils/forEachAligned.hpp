@@ -15,17 +15,16 @@ void forEachAligned(const char* first, const char* last, FApply&&... transform);
 
 namespace detail {
 
-template <typename... TFArgs>
-struct forEachAlignedImpl;
+template <typename... TFArgs> struct forEachAlignedImpl;
 
-template <typename TFArg, typename... TFArgRest>
-struct forEachAlignedImpl<TFArg, TFArgRest...> {
+template <typename TFArg, typename... TFArgRest> struct forEachAlignedImpl<TFArg, TFArgRest...> {
     static constexpr std::size_t byte_align = sizeof(TFArg);
 
     template <typename TChar, typename FApply, typename... FApplyRest>
-    ALWAYS_INLINE static TChar* step(TChar* first, TChar* last, const FApply& apply,
-                                             const FApplyRest&... apply_rest) {
-        if (reinterpret_cast<std::uintptr_t>(first) % byte_align == 0 && first + byte_align <= last) {
+    ALWAYS_INLINE static TChar* step(
+        TChar* first, TChar* last, const FApply& apply, const FApplyRest&... apply_rest) {
+        if (reinterpret_cast<std::uintptr_t>(first) % byte_align == 0
+            && first + byte_align <= last) {
             apply(reinterpret_cast<TFArg*>(first));
             return first + byte_align;
         } else {
@@ -34,8 +33,7 @@ struct forEachAlignedImpl<TFArg, TFArgRest...> {
     }
 };
 
-template <typename T>
-struct forEachAlignedImpl<T> {
+template <typename T> struct forEachAlignedImpl<T> {
     static_assert(sizeof(T) == 1, "You must provide a single byte type to forEachAligned");
 
     template <typename TChar, typename FApply>
@@ -52,7 +50,7 @@ void forEachAligned(TChar* first, TChar* last, FApply&&... transform) {
     }
 }
 
-}  // namespace detail
+} // namespace detail
 
 template <typename... TFArgs, typename... FApply>
 void forEachAligned(char* first, char* last, FApply&&... transform) {
@@ -64,4 +62,4 @@ void forEachAligned(const char* first, const char* last, FApply&&... transform) 
     detail::forEachAligned<const TFArgs...>(first, last, std::forward<FApply>(transform)...);
 }
 
-}  // namespace ccutils
+} // namespace ccutils
