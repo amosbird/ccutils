@@ -6,6 +6,12 @@
 #ifndef ALWAYS_INLINE
 #define ALWAYS_INLINE __attribute__((always_inline))
 #endif
+#ifndef NO_INLINE
+#define NO_INLINE __attribute__((__noinline__))
+#endif
+#ifndef MAY_ALIAS
+#define MAY_ALIAS __attribute__((__may_alias__))
+#endif
 
 #ifndef ANONYMOUS_VARIABLE
 #define CONCATENATE_IMPL(s1, s2) s1##s2
@@ -36,12 +42,12 @@ inline void hash_combine(std::size_t& seed, const T& v, Rest... rest) {
 
 #define MAKE_HASHABLE(type, ...)                                                                   \
     namespace std {                                                                                \
-        template <> struct hash<type> {                                                            \
-            std::size_t operator()(const type& t) const {                                          \
-                std::size_t ret = 0;                                                               \
-                ccutils::hash_combine(ret, __VA_ARGS__);                                           \
-                return ret;                                                                        \
-            }                                                                                      \
-        };                                                                                         \
+    template <> struct hash<type> {                                                                \
+        std::size_t operator()(const type& t) const {                                              \
+            std::size_t ret = 0;                                                                   \
+            ccutils::hash_combine(ret, __VA_ARGS__);                                               \
+            return ret;                                                                            \
+        }                                                                                          \
+    };                                                                                             \
     }
 #endif
