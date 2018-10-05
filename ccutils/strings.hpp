@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <algorithm>
 
 namespace ccutils {
 std::vector<std::string> splitString(const std::string& str, const std::string& delimiter) {
