@@ -254,7 +254,7 @@ public:
     }
 
     bool is_directory() const {
-        struct stat* st = get_stat();
+        get_stat();
         return S_ISDIR(stat_->st_mode);
     }
 
@@ -489,13 +489,13 @@ IterPath::const_iterator begin(const IterPath& path) {
     return IterPath::const_iterator{ path.str() };
 }
 
-IterPath::const_iterator end(const IterPath& path) { return IterPath::const_iterator{}; }
+IterPath::const_iterator end(const IterPath&) { return IterPath::const_iterator{}; }
 
 bool is_abspath(const String& path) { return Path::is_abspath(path); }
 
 Path cwd() { return Path::cwd(); }
 
-Path cd(const Path& path) { throw NotImplementedException(); }
+Path cd(const Path&) { throw NotImplementedException(); }
 
 Path tmp_dir() { return Path::tmp_dir(); }
 
@@ -711,17 +711,21 @@ namespace {
 
         void update() {
             constexpr static uint32_t MaxEventSize = sizeof(inotify_event) + NAME_MAX + 1;
-            ssize_t len = read(handleInotify_, eventBuffer_, MaxEventSize);
-            ssize_t offset = 0;
-
-            if (len == -1)
-                return;
-
-            while (len > offset) {
-                inotify_event* ev = (inotify_event*)(offset + eventBuffer_);
-                parseEvent(*ev);
-                offset += sizeof(ev->mask) + sizeof(ev->wd) + sizeof(ev->cookie) + sizeof(ev->len)
-                    + ev->len;
+            fd_set fds;
+            FD_ZERO(&fds);
+			FD_SET(handleInotify_, &fds);
+			if (select(handleInotify_ + 1, &fds, NULL, NULL, NULL) == 1)
+            {
+                ssize_t len = read(handleInotify_, eventBuffer_, MaxEventSize);
+                ssize_t offset = 0;
+                if (len == -1)
+                    return;
+                while (len > offset) {
+                    inotify_event* ev = (inotify_event*)(offset + eventBuffer_);
+                    parseEvent(*ev);
+                    offset += sizeof(ev->mask) + sizeof(ev->wd) + sizeof(ev->cookie) + sizeof(ev->len)
+                        + ev->len;
+                }
             }
         }
 
